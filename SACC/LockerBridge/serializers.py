@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
+from .models import Reservation, CancelReservation, Client, Operator, Confirmed, Loaded, Retrieved
 
 
 class ReservationSerializer(serializers.ModelSerializer):
