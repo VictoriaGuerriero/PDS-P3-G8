@@ -51,4 +51,4 @@ class Retrieved(models.Model):
 
     def __str__(self):
         return f'Id: {self.id}, Confirmed: {self.confirmed}, Retrieved Date: {self.retrieved_date}'
-# Create your models here.
+

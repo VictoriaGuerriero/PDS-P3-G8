@@ -6,12 +6,12 @@ from .models import Reservation, CancelReservation, Client, Operator, Confirmed,
 class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
-        fields = ['id', 'reservation_date', 'product_height', 'product_width', 'locker', 'station', 'status']
+        fields = ['id', 'product_height', 'product_width']
 
 class CancelReservationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Reservation
-        fields = ['id']
+        model = CancelReservation
+        fields = ['id', 'reservation']
     
 class ClientSerializer(serializers.ModelSerializer):
     class Meta:
@@ -29,19 +29,19 @@ class ConfirmedReservationSerializer(serializers.ModelSerializer):
     operator = OperatorSerializer(read_only=True)
     class Meta:
         model = Confirmed
-        fields = ['id', 'reservation', 'client', 'operator', 'confirmation_date']
+        fields = ['id', 'reservation', 'client', 'operator']
 
 class LoadedSerializer(serializers.ModelSerializer):
     confirmed = ConfirmedReservationSerializer(read_only=True)
     class Meta:
         model = Loaded
-        fields = ['id', 'confirmed', 'load_date']
+        fields = ['id', 'confirmed']
 
 class RetrievedSerializer(serializers.ModelSerializer):
     confirmed = ConfirmedReservationSerializer(read_only=True)
     class Meta:
         model = Retrieved
-        fields = ['id', 'confirmed', 'retrieved_date']
+        fields = ['id', 'confirmed']
 
 
 
