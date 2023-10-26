@@ -7,12 +7,14 @@ class Reservation(models.Model):
     locker = models.ForeignKey('Lockers.Locker', on_delete=models.CASCADE)
     station = models.ForeignKey('Lockers.Station', on_delete=models.CASCADE)
     status = models.CharField(max_length=200, default='pending')
+    code = models.CharField(max_length=200, default='')
 
     def __str__(self):
         return f'Id: {self.id}, Reservation Date: {self.reservation_date}, Product Height: {self.product_height}, Product Width: {self.product_width}, Locker: {self.locker}, Station: {self.station}, Status: {self.status}'
 
 class CancelReservation(models.Model):
     reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE)
+    code = models.CharField(max_length=200, default='')
 
     def __str__(self):
         return f'Id: {self.id}, Reservation: {self.reservation}'
