@@ -110,5 +110,24 @@ class RetrievedViewSet(viewsets.ModelViewSet):
         retrieved = Retrieved.objects.get(id=pk)
         retrieved.delete()
         return JsonResponse({'message': 'Retrieved deleted'}, status=200)
+    
+class CancelReservationViewSet(viewsets.ModelViewSet):
+    queryset = CancelReservation.objects.all()
+    serializer_class = ReservationSerializer
+
+    def create(self, request):
+
+        reservation_id = request.data['reservation_id']
+        reservation = Reservation.objects.get(id=reservation_id)
+        locker = reservation.locker
+        locker.availability = True
+        locker.reserved = False
+        locker.save()
+        CancelReservation.objects.create(
+            reservation=reservation,
+            code=reservation.code
+        )
+        reservation.delete()
+        return JsonResponse({'message': 'Reservation cancelled'}, status=201)
 
 

@@ -15,6 +15,7 @@ class Reservation(models.Model):
 class CancelReservation(models.Model):
     reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE)
     code = models.CharField(max_length=200, default='')
+    cancel_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'Id: {self.id}, Reservation: {self.reservation}'
