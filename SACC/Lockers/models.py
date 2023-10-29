@@ -17,9 +17,7 @@ class Locker(models.Model):
     confirmed = models.BooleanField(default=False)
     loaded = models.BooleanField(default=False)
     opened = models.BooleanField(default=False)
-    locked = models.BooleanField(default=False)
+    locked = models.BooleanField(default=True)
 
     def __str__(self):
         return f'Id: {self.id}, Availability: {self.availability}, Reserved: {self.reserved}, Confirmed: {self.confirmed}, Loaded: {self.loaded}, Opened: {self.opened}, Locked: {self.locked}'
-
-# Create your models here.
