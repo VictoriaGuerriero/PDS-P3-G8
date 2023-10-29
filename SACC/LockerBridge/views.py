@@ -76,6 +76,22 @@ class ConfirmedViewSet(viewsets.ModelViewSet):
     queryset = Confirmed.objects.all()
     serializer_class = ConfirmedSerializer
 
+    def create(self, request):
+        reservation_id = request.data['reservation_id']
+        client_id = request.data['client_id']
+        operator_id = request.data['operator_id']
+        reservation = Reservation.objects.get(id=reservation_id)
+        client = Client.objects.get(id=client_id)
+        operator = Operator.objects.get(id=operator_id)
+        Confirmed.objects.create(
+            reservation=reservation,
+            client=client,
+            operator=operator
+        )
+        reservation.confirmed = True
+        reservation.save()
+        return JsonResponse({'message': 'Reservation confirmed'}, status=201)
+
     @action(
         detail=True, 
         methods=['delete']
@@ -84,6 +100,34 @@ class ConfirmedViewSet(viewsets.ModelViewSet):
         confirmed = Confirmed.objects.get(id=pk)
         confirmed.delete()
         return JsonResponse({'message': 'Confirmed deleted'}, status=200)
+    
+    @action(
+        detail=True,
+        methods=['post']
+    )
+    def verify_operator(self, request):
+        code = request.data['code']
+        op_email = request.data['op_email']
+        operator = Operator.objects.filter(mail=op_email).first()
+        reservation = Reservation.objects.filter(code=code).first()
+        if reservation and operator:
+            return JsonResponse({'id': reservation.id, 'code': code, 'locker': reservation.locker.id, 'station': reservation.station.id}, status=200)
+        else:
+            return JsonResponse({'message': 'Reservation not found'}, status=404)
+        
+    @action(
+        detail=True,
+        methods=['post']
+    )
+    def verify_client(self, request):
+        code = request.data['code']
+        client_email = request.data['client_email']
+        client = Client.objects.filter(mail=client_email).first()
+        reservation = Reservation.objects.filter(code=code).first()
+        if reservation and client:
+            return JsonResponse({'id': reservation.id, 'code': code, 'locker': reservation.locker.id, 'station': reservation.station.id}, status=200)
+        else:
+            return JsonResponse({'message': 'Reservation not found'}, status=404)
     
 class LoadedViewSet(viewsets.ModelViewSet):
     queryset = Loaded.objects.all()
@@ -129,5 +173,3 @@ class CancelReservationViewSet(viewsets.ModelViewSet):
         )
         reservation.delete()
         return JsonResponse({'message': 'Reservation cancelled'}, status=201)
-
-
