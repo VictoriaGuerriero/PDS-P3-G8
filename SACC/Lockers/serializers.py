@@ -11,4 +11,4 @@ class LockerSerializer(serializers.ModelSerializer):
     class Meta:
         station = StationSerializer(read_only=True)
         model = Locker
-        fields = ['id', 'station', 'height', 'width', 'availability', 'reserved', 'confirmed', 'loaded', 'opened', 'locked']
+        fields = ['id', 'station', 'height', 'width']

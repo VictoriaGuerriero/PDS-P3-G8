@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 
-from SACC.LockerBridge.serializers import ReservationSerializer, ClientSerializer, OperatorSerializer, ConfirmedSerializer, LoadedSerializer, RetrievedSerializer
+from .serializers import ReservationSerializer, ClientSerializer, OperatorSerializer, ConfirmedSerializer, LoadedSerializer, RetrievedSerializer
 from .models import Reservation, CancelReservation, Client, Operator, Confirmed, Loaded, Retrieved
 from Lockers.models import Locker, Station
 from django.utils import timezone
@@ -18,11 +18,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
 
-    @action(
-        detail=True, 
-        methods=['post']
-    )
-    def create_reservation(self, request, pk):
+    def create(self, request):
 
         #Get product height and width from request
         product_height = request.data['product_height']
@@ -31,8 +27,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
         suitable_locker = Locker.objects.filter(
                 height__gte=product_height,
                 width__gte=product_width,
-                station__id=pk,
-                status='available'
+                availability=True
         ).first()
 
         if suitable_locker is None:
@@ -46,8 +41,10 @@ class ReservationViewSet(viewsets.ModelViewSet):
                 station=suitable_locker.station,
                 code = unique_code
             )
-            Locker.objects.filter(id=suitable_locker.id).update(reserved=True)
-            return JsonResponse({'id': reservation.id}, status=201)
+            suitable_locker.availability = False
+            suitable_locker.reserved = True
+            suitable_locker.save()
+            return JsonResponse({'id': reservation.id, 'code': unique_code, 'locker': suitable_locker.id, 'station': suitable_locker.station.id}, status=201)
         
 class ClientViewSet(viewsets.ModelViewSet):
     queryset = Client.objects.all()

@@ -23,7 +23,7 @@ class OperatorSerializer(serializers.ModelSerializer):
         model = Operator
         fields = ['id', 'mail']
 
-class ConfirmedReservationSerializer(serializers.ModelSerializer):
+class ConfirmedSerializer(serializers.ModelSerializer):
     reservation = ReservationSerializer(read_only=True)
     client = ClientSerializer(read_only=True)
     operator = OperatorSerializer(read_only=True)
@@ -32,13 +32,13 @@ class ConfirmedReservationSerializer(serializers.ModelSerializer):
         fields = ['id', 'reservation', 'client', 'operator']
 
 class LoadedSerializer(serializers.ModelSerializer):
-    confirmed = ConfirmedReservationSerializer(read_only=True)
+    confirmed = ConfirmedSerializer(read_only=True)
     class Meta:
         model = Loaded
         fields = ['id', 'confirmed']
 
 class RetrievedSerializer(serializers.ModelSerializer):
-    confirmed = ConfirmedReservationSerializer(read_only=True)
+    confirmed = ConfirmedSerializer(read_only=True)
     class Meta:
         model = Retrieved
         fields = ['id', 'confirmed']
