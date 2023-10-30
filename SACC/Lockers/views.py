@@ -12,6 +12,15 @@ class StationViewSet(viewsets.ModelViewSet):
     serializer_class = StationSerializer
 
     @action(
+            detail=True, 
+            methods=['get']
+            )
+    def get_lockers_by_station(self, request, pk):
+        lockers = Locker.objects.filter(station=pk)
+        serializer = LockerRetrieveSerializer(lockers, many=True)
+        return Response(serializer.data)
+
+    @action(
         detail=True, 
         methods=['delete']
     )
@@ -25,6 +34,15 @@ class LockerViewSet(viewsets.ModelViewSet):
     serializer_class = LockerRetrieveSerializer
 
     @action(
+            detail=True,
+            methods=['get']
+    )
+    def get_locker_locked(self, request, pk):
+        locker = Locker.objects.get(id=pk)
+        locked = locker.locked
+        return JsonResponse({'locked': locked}, status=200)
+
+    @action(
             detail=True, 
             methods=['get']
             )
@@ -35,18 +53,9 @@ class LockerViewSet(viewsets.ModelViewSet):
     
     @action(
             detail=True, 
-            methods=['get']
-            )
-    def get_lockers_by_station(self, request, pk):
-        lockers = Locker.objects.filter(station=pk)
-        serializer = LockerRetrieveSerializer(lockers, many=True)
-        return Response(serializer.data)
-    
-    @action(
-            detail=True, 
             methods=['put']
             )
-    def update_opened(self, request, pk):
+    def update_opened_true(self, request, pk):
         locker = Locker.objects.get(id=pk)
         locker.opened = True
         locker.save()
@@ -56,7 +65,17 @@ class LockerViewSet(viewsets.ModelViewSet):
             detail=True, 
             methods=['put']
             )
-    def update_locked(self, request, pk):
+    def update_opened_false(self, request, pk):
+        locker = Locker.objects.get(id=pk)
+        locker.opened = False
+        locker.save()
+        return JsonResponse({'message': 'Locker closed'}, status=200)
+    
+    @action(
+            detail=True, 
+            methods=['put']
+            )
+    def update_locked_true(self, request, pk):
         locker = Locker.objects.get(id=pk)
         locker.locked = True
         locker.save()
@@ -66,11 +85,51 @@ class LockerViewSet(viewsets.ModelViewSet):
             detail=True, 
             methods=['put']
             )
-    def update_loaded(self, request, pk):
+    def update_locked_false(self, request, pk):
+        locker = Locker.objects.get(id=pk)
+        locker.locked = False
+        locker.save()
+        return JsonResponse({'message': 'Locker unlocked'}, status=200)
+    
+    @action(
+            detail=True, 
+            methods=['put']
+            )
+    def update_loaded_true(self, request, pk):
         locker = Locker.objects.get(id=pk)
         locker.loaded = True
         locker.save()
         return JsonResponse({'message': 'Locker loaded'}, status=200)
+    
+    @action(
+            detail=True, 
+            methods=['put']
+            )
+    def update_loaded_false(self, request, pk):
+        locker = Locker.objects.get(id=pk)
+        locker.loaded = False
+        locker.save()
+        return JsonResponse({'message': 'Locker unloaded'}, status=200)
+    
+    @action(
+            detail=True,
+            methods=['put']
+    )
+    def update_reserved(self, request, pk):
+        locker = Locker.objects.get(id=pk)
+        locker.reserved = False
+        locker.save()
+        return JsonResponse({'message': 'Locker not reserved anymore'}, status=200)
+    
+    @action(
+            detail=True,
+            methods=['put']
+    )
+    def update_availability(self, request,pk):
+        locker = Locker.objects.get(id=pk)
+        locker.availability = True
+        locker.save()
+        return JsonResponse({'message': 'Locker available'}, status=200)
 
     @action(
         detail=True, 

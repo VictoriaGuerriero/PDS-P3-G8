@@ -9,6 +9,7 @@ import string
 import random
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from django.core import serializers
 
 def generate_unique_code(lenght=8):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=lenght))
@@ -23,6 +24,10 @@ class ReservationViewSet(viewsets.ModelViewSet):
         #Get product height and width from request
         product_height = request.data['product_height']
         product_width = request.data['product_width']
+        client_id = request.data['client']
+        operator_id = request.data['operator']
+        client = Client.objects.get(id=client_id)
+        operator = Operator.objects.get(id=operator_id)
 
         suitable_locker = Locker.objects.filter(
                 height__gte=product_height,
@@ -39,12 +44,16 @@ class ReservationViewSet(viewsets.ModelViewSet):
                 product_width=product_width,
                 locker=suitable_locker,
                 station=suitable_locker.station,
-                code = unique_code
+                code = unique_code,
+                client = client,
+                operator = operator
             )
             suitable_locker.availability = False
             suitable_locker.reserved = True
             suitable_locker.save()
-            return JsonResponse({'id': reservation.id, 'code': unique_code, 'locker': suitable_locker.id, 'station': suitable_locker.station.id}, status=201)
+            client_data = serializers.serialize('json', [client])
+            operator_data = serializers.serialize('json', [operator])
+            return JsonResponse({'id': reservation.id, 'code': unique_code, 'locker': suitable_locker.id, 'station': suitable_locker.station.id, 'client': client_data, 'operator': operator_data}, status=201)
         
 class ClientViewSet(viewsets.ModelViewSet):
     queryset = Client.objects.all()
@@ -78,19 +87,55 @@ class ConfirmedViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         reservation_id = request.data['reservation_id']
-        client_id = request.data['client_id']
-        operator_id = request.data['operator_id']
         reservation = Reservation.objects.get(id=reservation_id)
-        client = Client.objects.get(id=client_id)
-        operator = Operator.objects.get(id=operator_id)
-        Confirmed.objects.create(
-            reservation=reservation,
-            client=client,
-            operator=operator
-        )
-        reservation.confirmed = True
-        reservation.save()
-        return JsonResponse({'message': 'Reservation confirmed'}, status=201)
+        if reservation:
+            Confirmed.objects.create(
+                reservation=reservation,
+            )
+            locker = reservation.locker
+            locker.confirmed = True
+            locker.save()
+            return JsonResponse({'message': 'Size confirmed'}, status=201)
+        else:
+            return JsonResponse({'message': 'Reservation not found'}, status=404)
+    
+    @action(
+            detail=True,
+            methods=['post']
+    )
+    def confirm_operator(self, request, pk):
+        code = request.data['code']
+        op_email = request.data['op_email']
+
+        operator = Operator.objects.filter(mail=op_email).first()
+        reservation = Reservation.objects.filter(code=code).first()
+        if reservation and operator == reservation.operator:
+            locker = reservation.locker
+            locker.locked = False
+            locker.opened = True
+            locker.save()
+            return JsonResponse({'message': 'Operator confirmed, locker opened'}, status=200)
+        else:
+            return JsonResponse({'message': 'Reservation not found'}, status=404)
+    
+    @action(
+            detail=True,
+            methods=['post']
+    )
+    def confirm_client(self, request, pk):
+        code = request.data['code']
+        client_email = request.data['client_email']
+
+        client = Client.objects.filter(mail=client_email).first()
+        reservation = Reservation.objects.filter(code=code).first()
+        if reservation and client == reservation.client:
+            locker = reservation.locker
+            locker.locked = False
+            locker.opened = True
+            locker.save()
+            return JsonResponse({'message': 'Client confirmed, locker opened'}, status=200)
+        else:
+            return JsonResponse({'message': 'Reservation not found'}, status=404)
 
     @action(
         detail=True, 
@@ -100,38 +145,30 @@ class ConfirmedViewSet(viewsets.ModelViewSet):
         confirmed = Confirmed.objects.get(id=pk)
         confirmed.delete()
         return JsonResponse({'message': 'Confirmed deleted'}, status=200)
-    
-    @action(
-        detail=True,
-        methods=['post']
-    )
-    def verify_operator(self, request):
-        code = request.data['code']
-        op_email = request.data['op_email']
-        operator = Operator.objects.filter(mail=op_email).first()
-        reservation = Reservation.objects.filter(code=code).first()
-        if reservation and operator:
-            return JsonResponse({'id': reservation.id, 'code': code, 'locker': reservation.locker.id, 'station': reservation.station.id}, status=200)
-        else:
-            return JsonResponse({'message': 'Reservation not found'}, status=404)
-        
-    @action(
-        detail=True,
-        methods=['post']
-    )
-    def verify_client(self, request):
-        code = request.data['code']
-        client_email = request.data['client_email']
-        client = Client.objects.filter(mail=client_email).first()
-        reservation = Reservation.objects.filter(code=code).first()
-        if reservation and client:
-            return JsonResponse({'id': reservation.id, 'code': code, 'locker': reservation.locker.id, 'station': reservation.station.id}, status=200)
-        else:
-            return JsonResponse({'message': 'Reservation not found'}, status=404)
+
     
 class LoadedViewSet(viewsets.ModelViewSet):
     queryset = Loaded.objects.all()
     serializer_class = LoadedSerializer
+
+    def create(self, request):
+        # code = request.data['code']
+        # op_email = request.data['op_email']
+        # operator = Operator.objects.filter(mail=op_email).first()
+        reservation_id = request.data['reservation_id']
+        reservation = Reservation.objects.get(id=reservation_id)
+        if reservation:
+            Loaded.objects.create(
+                reservation=reservation,
+            )
+            locker = reservation.locker
+            locker.loaded = True
+            locker.opened = False
+            locker.locked = True
+            locker.save()
+            return JsonResponse({'message': 'Locker Loaded Correctly'}, status=200)
+        else:
+            return JsonResponse({'message': 'Reservation not found'}, status=404)
 
     @action(
         detail=True, 
@@ -145,6 +182,29 @@ class LoadedViewSet(viewsets.ModelViewSet):
 class RetrievedViewSet(viewsets.ModelViewSet):
     queryset = Retrieved.objects.all()
     serializer_class = RetrievedSerializer
+
+    # @action(
+    #     detail=True,
+    #     methods=['post']
+    # )
+    def create(self, request):
+        reservation_id = request.data['reservation_id']
+        reservation = Reservation.objects.filter(id=reservation_id).first()
+        if reservation:
+            Retrieved.objects.create(
+                reservation=reservation,
+            )
+            locker = reservation.locker
+            locker.availability = True
+            locker.reserved = False
+            locker.confirmed = False
+            locker.loaded = False
+            locker.opened = False
+            locker.locked = True
+            locker.save()
+            return JsonResponse({'message': 'Packaged retrieved by client'}, status=200)
+        else:
+            return JsonResponse({'message': 'Reservation not found'}, status=404)
 
     @action(
         detail=True, 

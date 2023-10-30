@@ -2,17 +2,6 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import Reservation, CancelReservation, Client, Operator, Confirmed, Loaded, Retrieved
 
-
-class ReservationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Reservation
-        fields = ['id', 'product_height', 'product_width']
-
-class CancelReservationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CancelReservation
-        fields = ['id', 'reservation']
-    
 class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
@@ -23,25 +12,35 @@ class OperatorSerializer(serializers.ModelSerializer):
         model = Operator
         fields = ['id', 'mail']
 
-class ConfirmedSerializer(serializers.ModelSerializer):
-    reservation = ReservationSerializer(read_only=True)
-    client = ClientSerializer(read_only=True)
-    operator = OperatorSerializer(read_only=True)
+class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
+        client = ClientSerializer(read_only=True)
+        operator = OperatorSerializer(read_only=True)
+        model = Reservation
+        fields = ['id', 'product_height', 'product_width', 'client', 'operator']
+
+class CancelReservationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CancelReservation
+        fields = ['id', 'reservation']
+
+class ConfirmedSerializer(serializers.ModelSerializer):
+    class Meta:
+        reservation = ReservationSerializer(read_only=True)
         model = Confirmed
-        fields = ['id', 'reservation', 'client', 'operator']
+        fields = ['id', 'reservation']
 
 class LoadedSerializer(serializers.ModelSerializer):
-    confirmed = ConfirmedSerializer(read_only=True)
     class Meta:
+        reservation = ReservationSerializer(read_only=True)
         model = Loaded
-        fields = ['id', 'confirmed']
+        fields = ['id', 'reservation']
 
 class RetrievedSerializer(serializers.ModelSerializer):
-    confirmed = ConfirmedSerializer(read_only=True)
     class Meta:
+        reservation = ReservationSerializer(read_only=True)
         model = Retrieved
-        fields = ['id', 'confirmed']
+        fields = ['id', 'reservation']
 
 
 

@@ -15,8 +15,29 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+
+from LockerBridge import views
+from Lockers import views
+from rest_framework.routers import DefaultRouter
+
+from LockerBridge.views import ReservationViewSet, ClientViewSet, OperatorViewSet, ConfirmedViewSet, LoadedViewSet, RetrievedViewSet
+from Lockers.views import LockerViewSet, StationViewSet
+
+router = DefaultRouter()
+
+router.register(r'reservations', ReservationViewSet)
+router.register(r'clients', ClientViewSet)
+router.register(r'operators', OperatorViewSet)
+router.register(r'confirmeds', ConfirmedViewSet)
+router.register(r'loadeds', LoadedViewSet)
+router.register(r'retrieveds', RetrievedViewSet)
+router.register(r'lockers', LockerViewSet)
+router.register(r'stations', StationViewSet)
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include(router.urls)),
+
 ]
