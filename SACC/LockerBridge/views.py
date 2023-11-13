@@ -11,6 +11,9 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from django.core import serializers
 
+def home(request):
+    return render(request, 'home.html')
+
 def generate_unique_code(lenght=8):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=lenght))
 
@@ -233,3 +236,35 @@ class CancelReservationViewSet(viewsets.ModelViewSet):
         )
         reservation.delete()
         return JsonResponse({'message': 'Reservation cancelled'}, status=201)
+    
+################################################## FRONT ##################################################
+
+                                       
+                                    
+from .forms import ReservationForm
+
+def operator_view(request):
+    if request.method == 'POST':
+        form = ReservationForm(request.POST)
+        if form.is_valid():
+            # Process the form data (e.g., save to database)
+            email = form.cleaned_data['email']
+            reservation_code = form.cleaned_data['reservation_code']
+            # Add your logic here
+    else:
+        form = ReservationForm()
+
+    return render(request, 'operator_form.html', {'form': form})
+
+def client_view(request):
+    if request.method == 'POST':
+        form = ReservationForm(request.POST)
+        if form.is_valid():
+            # Process the form data (e.g., save to database)
+            email = form.cleaned_data['email']
+            reservation_code = form.cleaned_data['reservation_code']
+            # Add your logic here
+    else:
+        form = ReservationForm()
+
+    return render(request, 'client_form.html', {'form': form})

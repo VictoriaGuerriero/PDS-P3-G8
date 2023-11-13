@@ -17,13 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from LockerBridge import views
-from Lockers import views
-from rest_framework.routers import DefaultRouter
 
-from LockerBridge.views import ReservationViewSet, ClientViewSet, OperatorViewSet, ConfirmedViewSet, LoadedViewSet, RetrievedViewSet
+from LockerBridge.views import (
+    ReservationViewSet, ClientViewSet, OperatorViewSet,
+    ConfirmedViewSet, LoadedViewSet, RetrievedViewSet, home, operator_view, client_view
+)
 from Lockers.views import LockerViewSet, StationViewSet
-
+from rest_framework.routers import DefaultRouter
 router = DefaultRouter()
 
 router.register(r'reservations', ReservationViewSet)
@@ -35,9 +35,9 @@ router.register(r'retrieveds', RetrievedViewSet)
 router.register(r'lockers', LockerViewSet)
 router.register(r'stations', StationViewSet)
 
-
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('operator/', operator_view, name='operator_view'),
+    path('client/', client_view, name='client_view'),
     path('', include(router.urls)),
-
 ]
