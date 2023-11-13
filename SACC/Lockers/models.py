@@ -10,8 +10,8 @@ class Station(models.Model):
     
 class Locker(models.Model):
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
-    height = models.IntegerField(default=0)
-    width = models.IntegerField(default=0)
+    height = models.FloatField(default=0)
+    width = models.FloatField(default=0)
     availability = models.BooleanField(default=True)
     reserved = models.BooleanField(default=False)
     confirmed = models.BooleanField(default=False)

@@ -21,6 +21,7 @@ class Reservation(models.Model):
     code = models.CharField(max_length=200, default='')
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     operator = models.ForeignKey(Operator, on_delete=models.CASCADE)
+    active = models.BooleanField(default=True)
 
     def __str__(self):
         return f'Id: {self.id}, Reservation Date: {self.reservation_date}, Product Height: {self.product_height}, Product Width: {self.product_width}, Locker: {self.locker}, Station: {self.station}, Client: {self.client}, Operator: {self.operator}'
