@@ -10,6 +10,8 @@ import random
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from django.core import serializers
+from django.core.mail import send_mail
+from django.http import HttpResponse
 
 def home(request):
     return render(request, 'home.html')
@@ -49,11 +51,19 @@ class ReservationViewSet(viewsets.ModelViewSet):
                 station=suitable_locker.station,
                 code = unique_code,
                 client = client,
-                operator = operator
+                operator = operator,
+                active = True
             )
             suitable_locker.availability = False
             suitable_locker.reserved = True
             suitable_locker.save()
+
+            subject = 'Locker Reservation'
+            message = f'The reservation of the locker has been made successfully. Your code is {unique_code}. The locker is located in {suitable_locker.station.address} and its locker number is {suitable_locker.id}'
+            from_email = 'notification@miuandes.cl'
+            recipient_list = [operator.mail, client.mail]
+            send_mail(subject, message, from_email, recipient_list)
+
             client_data = serializers.serialize('json', [client])
             operator_data = serializers.serialize('json', [operator])
             return JsonResponse({'id': reservation.id, 'code': unique_code, 'locker': suitable_locker.id, 'station': suitable_locker.station.id, 'client': client_data, 'operator': operator_data}, status=201)
@@ -158,12 +168,21 @@ class LoadedViewSet(viewsets.ModelViewSet):
         # code = request.data['code']
         # op_email = request.data['op_email']
         # operator = Operator.objects.filter(mail=op_email).first()
-        reservation_id = request.data['reservation_id']
-        reservation = Reservation.objects.get(id=reservation_id)
+        # reservation_id = request.data['reservation_id']
+        # reservation = Reservation.objects.get(id=reservation_id)
+        locker_id = request.data['locker_id']
+        locker = Locker.objects.get(id=locker_id)
+        reservation = Reservation.objects.filter(locker=locker, active=True).first()
         if reservation:
             Loaded.objects.create(
                 reservation=reservation,
             )
+            subject = 'Locker Loaded'
+            message = 'Your package is ready to be retrieved'
+            from_email = 'notification@miuandes.cl'
+            recipient_list = [reservation.client.mail]
+
+            send_mail(subject, message, from_email, recipient_list)
             locker = reservation.locker
             locker.loaded = True
             locker.opened = False
@@ -197,6 +216,12 @@ class RetrievedViewSet(viewsets.ModelViewSet):
             Retrieved.objects.create(
                 reservation=reservation,
             )
+            subject = 'Package Retrieved'
+            message = 'The package has been retrieved'
+            from_email = 'notification@miuandes.cl'
+            recipient_list = [reservation.operator.mail]
+
+            send_mail(subject, message, from_email, recipient_list)
             locker = reservation.locker
             locker.availability = True
             locker.reserved = False
@@ -205,6 +230,8 @@ class RetrievedViewSet(viewsets.ModelViewSet):
             locker.opened = False
             locker.locked = True
             locker.save()
+            reservation.active = False
+            reservation.save()
             return JsonResponse({'message': 'Packaged retrieved by client'}, status=200)
         else:
             return JsonResponse({'message': 'Reservation not found'}, status=404)
