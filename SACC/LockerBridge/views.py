@@ -68,7 +68,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
 
             client_data = serializers.serialize('json', [client])
             operator_data = serializers.serialize('json', [operator])
-            return JsonResponse({'id': reservation.id, 'code': unique_code, 'locker': suitable_locker.id, 'station': suitable_locker.station.id, 'client': client_data, 'operator': operator_data}, status=201)
+            return JsonResponse({'id': reservation.id, 'code': unique_code, 'locker': suitable_locker.id, 'station': suitable_locker.station.id, 'client': client_data, 'operator': operator_data, 'active': reservation.active}, status=201)
 
     # @action(
     #     detail=True,
@@ -101,25 +101,6 @@ class ReservationViewSet(viewsets.ModelViewSet):
             locker.opened = True
             locker.save()
 
-            Retrieved.objects.create(
-                reservation=reservation,
-            )
-            subject = 'Package Retrieved'
-            message = 'The package has been retrieved'
-            from_email = 'notification@miuandes.cl'
-            recipient_list = [reservation.operator.mail]
-
-            send_mail(subject, message, from_email, recipient_list)
-            locker = reservation.locker
-            locker.availability = True
-            locker.reserved = False
-            locker.confirmed = False
-            locker.loaded = False
-            locker.opened = False
-            locker.locked = True
-            locker.save()
-            reservation.active = False
-            reservation.save()
             return JsonResponse({'message': 'Client confirmed, locker opened and package retrieved'}, status=200)
         else:
             return JsonResponse({'message': 'Reservation not found'}, status=404)
@@ -229,8 +210,9 @@ class RetrievedViewSet(viewsets.ModelViewSet):
     #     methods=['post']
     # )
     def create(self, request):
-        reservation_id = request.data['reservation_id']
-        reservation = Reservation.objects.filter(id=reservation_id).first()
+        locker_id = request.data['locker_id']
+        locker = Locker.objects.get(id=locker_id)
+        reservation = Reservation.objects.filter(locker=locker, active=True).first()
         if reservation:
             Retrieved.objects.create(
                 reservation=reservation,
