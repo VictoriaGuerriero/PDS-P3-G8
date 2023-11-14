@@ -61,7 +61,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
             suitable_locker.save()
 
             subject = 'Locker Reservation'
-            message = f'The reservation of the locker has been made successfully. Your code is {unique_code}. The locker is located in {suitable_locker.station.address} and its locker number is {suitable_locker.id}'
+            message = f'The reservation of the locker has been made successfully. Your code is {unique_code}. \n The locker is located in: {suitable_locker.station.address}. \n Its locker number is: {suitable_locker.id}. \n When loading the package in the locker please enter the correct infromation in the following link: https://tsqrmn8j-8000.brs.devtunnels.ms/operator/ \n When retrieving the package please enter the correct information in the following link: https://tsqrmn8j-8000.brs.devtunnels.ms/client/ \n \n SACC Team'
             from_email = 'notification@miuandes.cl'
             recipient_list = [operator.mail, client.mail]
             send_mail(subject, message, from_email, recipient_list)
@@ -178,7 +178,7 @@ class LoadedViewSet(viewsets.ModelViewSet):
                 reservation=reservation,
             )
             subject = 'Locker Loaded'
-            message = 'Your package is ready to be retrieved'
+            message = 'Your package is ready to be retrieved. Remember to enter the correct information in the following link: https://tsqrmn8j-8000.brs.devtunnels.ms/client/ \n\n SACC Team'
             from_email = 'notification@miuandes.cl'
             recipient_list = [reservation.client.mail]
 
@@ -218,7 +218,7 @@ class RetrievedViewSet(viewsets.ModelViewSet):
                 reservation=reservation,
             )
             subject = 'Package Retrieved'
-            message = 'The package has been retrieved'
+            message = 'The package has been retrieved by the client. \n\n SACC Team'
             from_email = 'notification@miuandes.cl'
             recipient_list = [reservation.operator.mail]
 
