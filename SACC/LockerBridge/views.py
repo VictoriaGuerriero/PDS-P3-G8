@@ -1,5 +1,6 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
+from django.contrib import messages
 
 from .serializers import ReservationSerializer, ClientSerializer, OperatorSerializer, ConfirmedSerializer, LoadedSerializer, RetrievedSerializer
 from .models import Reservation, CancelReservation, Client, Operator, Confirmed, Loaded, Retrieved
@@ -12,6 +13,7 @@ from rest_framework.decorators import action
 from django.core import serializers
 from django.core.mail import send_mail
 from django.http import HttpResponse
+import requests
 
 def home(request):
     return render(request, 'home.html')
@@ -294,7 +296,22 @@ def operator_view(request):
             # Process the form data (e.g., save to database)
             email = form.cleaned_data['email']
             reservation_code = form.cleaned_data['reservation_code']
-            # Add your logic here
+            
+            data = {
+                'code': reservation_code,
+                'op_email': email
+            }
+
+            response = requests.post('https://tsqrmn8j-8000.brs.devtunnels.ms/api/reservations/verify-operator/', data=data)
+
+            if response.status_code == 200:
+                messages.success(request, f'Success! Operator confirmed, locker opened. Response: {response.json()}')
+            else:
+                messages.error(request, f'Error! {response.json()}')
+
+            return redirect('operator_view')
+
+
     else:
         form = ReservationForm()
 
@@ -307,7 +324,20 @@ def client_view(request):
             # Process the form data (e.g., save to database)
             email = form.cleaned_data['email']
             reservation_code = form.cleaned_data['reservation_code']
-            # Add your logic here
+            
+            data = {
+                'code': reservation_code,
+                'client_email': email
+            }
+
+            response = requests.post('https://tsqrmn8j-8000.brs.devtunnels.ms/api/reservations/verify-client/', data=data)
+
+            if response.status_code == 200:
+                messages.success(request, f'Success! Client confirmed, locker opened. Response: {response.json()}')
+            else:
+                messages.error(request, f'Error! {response.json()}')
+            
+            return redirect('operator_view')
     else:
         form = ReservationForm()
 

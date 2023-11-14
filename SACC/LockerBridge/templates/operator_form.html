@@ -10,6 +10,14 @@
 </head>
 <body>
     <div class="container mt-5">
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
         <h1>Dropping form</h1>
         <form method="post" action="{% url 'operator_view' %}">
             {% csrf_token %}
