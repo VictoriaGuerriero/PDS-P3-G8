@@ -67,6 +67,61 @@ class ReservationViewSet(viewsets.ModelViewSet):
             client_data = serializers.serialize('json', [client])
             operator_data = serializers.serialize('json', [operator])
             return JsonResponse({'id': reservation.id, 'code': unique_code, 'locker': suitable_locker.id, 'station': suitable_locker.station.id, 'client': client_data, 'operator': operator_data}, status=201)
+
+    # @action(
+    #     detail=True,
+    #     methods=['post']
+    # )
+    def verify_operator(self, request):
+        code = request.data['code']
+        op_email = request.data['op_email']
+
+        operator = Operator.objects.filter(mail=op_email).first()
+        reservation = Reservation.objects.filter(code=code).first()
+        if reservation and operator == reservation.operator:
+            locker = reservation.locker
+            locker.locked = False
+            locker.opened = True
+            locker.save()
+            return JsonResponse({'message': 'Operator confirmed, locker opened'}, status=200)
+        else:
+            return JsonResponse({'message': 'Reservation not found'}, status=404)
+        
+    def verify_client(self, request):
+        code = request.data['code']
+        client_email = request.data['client_email']
+
+        client = Client.objects.filter(mail=client_email).first()
+        reservation = Reservation.objects.filter(code=code).first()
+        if reservation and client == reservation.client:
+            locker = reservation.locker
+            locker.locked = False
+            locker.opened = True
+            locker.save()
+
+            Retrieved.objects.create(
+                reservation=reservation,
+            )
+            subject = 'Package Retrieved'
+            message = 'The package has been retrieved'
+            from_email = 'notification@miuandes.cl'
+            recipient_list = [reservation.operator.mail]
+
+            send_mail(subject, message, from_email, recipient_list)
+            locker = reservation.locker
+            locker.availability = True
+            locker.reserved = False
+            locker.confirmed = False
+            locker.loaded = False
+            locker.opened = False
+            locker.locked = True
+            locker.save()
+            reservation.active = False
+            reservation.save()
+            return JsonResponse({'message': 'Client confirmed, locker opened and package retrieved'}, status=200)
+        else:
+            return JsonResponse({'message': 'Reservation not found'}, status=404)
+    
         
 class ClientViewSet(viewsets.ModelViewSet):
     queryset = Client.objects.all()
@@ -109,44 +164,6 @@ class ConfirmedViewSet(viewsets.ModelViewSet):
             locker.confirmed = True
             locker.save()
             return JsonResponse({'message': 'Size confirmed'}, status=201)
-        else:
-            return JsonResponse({'message': 'Reservation not found'}, status=404)
-    
-    @action(
-            detail=True,
-            methods=['post']
-    )
-    def confirm_operator(self, request, pk):
-        code = request.data['code']
-        op_email = request.data['op_email']
-
-        operator = Operator.objects.filter(mail=op_email).first()
-        reservation = Reservation.objects.filter(code=code).first()
-        if reservation and operator == reservation.operator:
-            locker = reservation.locker
-            locker.locked = False
-            locker.opened = True
-            locker.save()
-            return JsonResponse({'message': 'Operator confirmed, locker opened'}, status=200)
-        else:
-            return JsonResponse({'message': 'Reservation not found'}, status=404)
-    
-    @action(
-            detail=True,
-            methods=['post']
-    )
-    def confirm_client(self, request, pk):
-        code = request.data['code']
-        client_email = request.data['client_email']
-
-        client = Client.objects.filter(mail=client_email).first()
-        reservation = Reservation.objects.filter(code=code).first()
-        if reservation and client == reservation.client:
-            locker = reservation.locker
-            locker.locked = False
-            locker.opened = True
-            locker.save()
-            return JsonResponse({'message': 'Client confirmed, locker opened'}, status=200)
         else:
             return JsonResponse({'message': 'Reservation not found'}, status=404)
 

@@ -40,4 +40,8 @@ urlpatterns = [
     path('operator/', operator_view, name='operator_view'),
     path('client/', client_view, name='client_view'),
     path('', include(router.urls)),
+
+    path('api/reservations/verify-operator/', ReservationViewSet.as_view({'post': 'verify_operator'}), name='verify-operator'),
+    path('api/reservations/verify-client/', ReservationViewSet.as_view({'post': 'verify_client'}), name='verify-client'),
+
 ]
