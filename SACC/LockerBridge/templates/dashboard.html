@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <!-- Agrega la referencia a Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+    
+    <div class="container mt-5">
+        <h1 class="mb-4">Estaciones</h1>
+        <div class="row">
+        {% for station in stations %}
+        <div class="col-md-4">
+            <div class="card h-100" >
+                <div class="card-body">
+                    <h2 class="card-title" data-toggle="modal" data-target="#stationModal{{ station.id }}"">{{ station.address }}</h2>
+                    <ul class="list-group list-group-flush">
+                        {% for reservation in station.reservations %}
+
+                        <a href="#" data-toggle="modal" data-target="#reservationModal{{ reservation.id }}" class="list-group-item list-group-item-action">
+                            Reservación #{{ reservation.id }}
+                        </a>
+                        <div class="modal fade" id="reservationModal{{ reservation.id }}" tabindex="-1" role="dialog" aria-labelledby="reservationModalLabel{{ reservation.id }}" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                               
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="reservationModalLabel{{ reservation.id }}">Detalle de Reserva</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    {% include 'reservation_detail.html' with reservation=reservation cancel_info=reservation.cancel_info confirmed_info=reservation.confirmed_info loaded_info=reservation.loaded_info retrieved_info=reservation.retrieved_info %}
+
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </ul>
+                    
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="stationModal{{ station.id }}" tabindex="-1" role="dialog" aria-labelledby="stationModalLabel{{ station.id }}" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="stationModalLabel{{ station.id }}">{{ station.address }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Total Reservations: {{ station.total_reservations }}</p>
+                        <p>Avg Time to Load: {{ station.avg_time_to_load|default:"N/A" }}</p>
+                        <p>Avg Time to Retrieve: {{ station.avg_time_to_retrieve|default:"N/A" }}</p>
+                        <p>Pending Reservations: {{ station.pending_reservations }}</p>
+                        <p>Overdue Packages: {{ station.overdue_packages }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    </div>
+
+    <!-- Agrega la referencia a Bootstrap JS y Popper.js (necesario para algunas funcionalidades de Bootstrap) -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+</html>

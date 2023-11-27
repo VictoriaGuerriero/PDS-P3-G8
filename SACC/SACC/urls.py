@@ -16,11 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
+from django.contrib.auth import views as auth_views
 
 from LockerBridge.views import (
     ReservationViewSet, ClientViewSet, OperatorViewSet,
-    ConfirmedViewSet, LoadedViewSet, RetrievedViewSet, home, operator_view, client_view
+    ConfirmedViewSet, LoadedViewSet, RetrievedViewSet, home, operator_view, client_view, register, reservation_detail, dashboard
 )
 from Lockers.views import LockerViewSet, StationViewSet
 from rest_framework.routers import DefaultRouter
@@ -37,9 +37,15 @@ router.register(r'stations', StationViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('home/', home, name='home'),
     path('operator/', operator_view, name='operator_view'),
     path('client/', client_view, name='client_view'),
     path('', include(router.urls)),
+    path('register/', register, name='register'),
+
+    path('dashboard/', dashboard, name='dashboard'),
+  
+    path('reservation_detail/<int:reservation_id>/', reservation_detail, name='reservation_detail'),
 
     path('api/reservations/verify-operator/', ReservationViewSet.as_view({'post': 'verify_operator'}), name='verify-operator'),
     path('api/reservations/verify-client/', ReservationViewSet.as_view({'post': 'verify_client'}), name='verify-client'),

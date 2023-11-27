@@ -1,6 +1,9 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib import messages
+from django.db.models import Count, Avg
+from django.db.models import Q
+from django.db.models import F
 
 from .serializers import ReservationSerializer, ClientSerializer, OperatorSerializer, ConfirmedSerializer, LoadedSerializer, RetrievedSerializer
 from .models import Reservation, CancelReservation, Client, Operator, Confirmed, Loaded, Retrieved
@@ -281,7 +284,7 @@ class CancelReservationViewSet(viewsets.ModelViewSet):
 
                                        
                                     
-from .forms import ReservationForm
+from .forms import ReservationForm, UserRegisterForm
 
 def operator_view(request):
     if request.method == 'POST':
@@ -336,3 +339,50 @@ def client_view(request):
         form = ReservationForm()
 
     return render(request, 'client_form.html', {'form': form})
+
+def register(request):
+    if request.method == 'POST':
+        form = UserRegisterForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('login')  
+    else:
+        form = UserRegisterForm()
+    return render(request, 'register.html', {'form': form})
+
+def reservation_detail(request, reservation_id):
+    reservation = Reservation.objects.get(id=reservation_id)
+    cancel_info = CancelReservation.objects.filter(reservation=reservation).first()
+    confirmed_info = Confirmed.objects.filter(reservation=reservation).first()
+    loaded_info = Loaded.objects.filter(reservation=reservation).first()
+    retrieved_info = Retrieved.objects.filter(reservation=reservation).first()
+
+    context = {
+        'reservation': reservation,
+        'cancel_info': cancel_info,
+        'confirmed_info': confirmed_info,
+        'loaded_info': loaded_info,
+        'retrieved_info': retrieved_info,
+    }
+    return render(request, 'reservation_detail.html', context)
+
+def dashboard(request):
+    # Obtener información actual e histórica de las estaciones
+    stations = Station.objects.annotate(
+        total_reservations=Count('locker__reservation'),
+        avg_time_to_load=Avg(F('locker__reservation__loaded__load_date') - F('locker__reservation__reservation_date')),
+        avg_time_to_retrieve=Avg(F('locker__reservation__retrieved__retrieved_date') - F('locker__reservation__loaded__load_date')),
+        pending_reservations=Count('locker__reservation__active', filter=Q(locker__reservation__active=True) & Q(locker__reservation__loaded__isnull=True)),
+        overdue_packages=Count('locker__reservation__active', filter=Q(locker__reservation__active=True) & Q(locker__reservation__retrieved__isnull=True) & Q(locker__reservation__loaded__isnull=False) & Q(locker__reservation__loaded__load_date__lt=timezone.now() - timezone.timedelta(days=7)))
+        
+    )
+    for station in stations:
+        station_reservations= station.reservation_set.all()
+        for reservation in station_reservations:
+            reservation.cancel_info = CancelReservation.objects.filter(reservation=reservation).first()
+            reservation.confirmed_info = Confirmed.objects.filter(reservation=reservation).first()
+            reservation.loaded_info = Loaded.objects.filter(reservation=reservation).first()
+            reservation.retrieved_info = Retrieved.objects.filter(reservation=reservation).first()
+        station.reservations = station_reservations
+    context = {'stations': stations}
+    return render(request, 'dashboard.html', context)
