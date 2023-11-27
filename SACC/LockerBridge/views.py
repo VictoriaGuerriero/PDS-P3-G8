@@ -60,11 +60,23 @@ class ReservationViewSet(viewsets.ModelViewSet):
             suitable_locker.reserved = True
             suitable_locker.save()
 
+            #operator mail
+
             subject = 'Locker Reservation'
-            message = f'The reservation of the locker has been made successfully. Your code is {unique_code}. \n The locker is located in: {suitable_locker.station.address}. \n Its locker number is: {suitable_locker.id}. \n When loading the package in the locker please enter the correct infromation in the following link: https://tsqrmn8j-8000.brs.devtunnels.ms/operator/ \n When retrieving the package please enter the correct information in the following link: https://tsqrmn8j-8000.brs.devtunnels.ms/client/ \n \n SACC Team'
+            message = f'The reservation of the locker has been made successfully. Your code is {unique_code}. \n The locker is located in: {suitable_locker.station.address}. \n Its locker number is: {suitable_locker.id}. \n When loading the package in the locker please enter the correct infromation in the following link: https://tsqrmn8j-8000.brs.devtunnels.ms/operator/ \n \n SACC Team'
             from_email = 'notification@miuandes.cl'
-            recipient_list = [operator.mail, client.mail]
+            recipient_list = [operator.mail]
             send_mail(subject, message, from_email, recipient_list)
+            print(f'Email sent to operator ({operator.mail})')
+
+            #client mail
+
+            subject = 'Locker Reservation'
+            message = f'The reservation of the locker has been made successfully. Your code is {unique_code}. \n The locker is located in: {suitable_locker.station.address}. \n Its locker number is: {suitable_locker.id}. \nWhen retrieving the package please enter the correct information in the following link: https://tsqrmn8j-8000.brs.devtunnels.ms/client/ \n \n SACC Team'
+            from_email = 'notification@miuandes.cl'
+            recipient_list = [client.mail]
+            send_mail(subject, message, from_email, recipient_list)
+            print(f'Email sent to client ({client.mail})')
 
             client_data = serializers.serialize('json', [client])
             operator_data = serializers.serialize('json', [operator])
