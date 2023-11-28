@@ -115,11 +115,21 @@ class LockerViewSet(viewsets.ModelViewSet):
             detail=True,
             methods=['put']
     )
-    def update_reserved(self, request, pk):
+    def update_reserved_false(self, request, pk):
         locker = Locker.objects.get(id=pk)
         locker.reserved = False
         locker.save()
         return JsonResponse({'message': 'Locker not reserved anymore'}, status=200)
+    
+    @action(
+            detail=True,
+            methods=['put']
+    )
+    def update_reserved_true(self, request, pk):
+        locker = Locker.objects.get(id=pk)
+        locker.reserved = True
+        locker.save()
+        return JsonResponse({'message': 'Locker reserved'}, status=200)
     
     @action(
             detail=True,
@@ -130,6 +140,26 @@ class LockerViewSet(viewsets.ModelViewSet):
         locker.availability = True
         locker.save()
         return JsonResponse({'message': 'Locker available'}, status=200)
+    
+    @action(
+            detail=True,
+            methods=['put']
+    )
+    def update_confirmed_true(self, request, pk):
+        locker = Locker.objects.get(id=pk)
+        locker.confirmed = True
+        locker.save()
+        return JsonResponse({'message': 'Locker confirmed'}, status=200)
+    
+    @action(
+            detail=True,
+            methods=['put']
+    )
+    def update_confirmed_false(self, request, pk):
+        locker = Locker.objects.get(id=pk)
+        locker.confirmed = False
+        locker.save()
+        return JsonResponse({'message': 'Locker confirmed'}, status=200)
 
     @action(
         detail=True, 

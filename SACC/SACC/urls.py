@@ -20,7 +20,7 @@ from django.contrib.auth import views as auth_views
 
 from LockerBridge.views import (
     ReservationViewSet, ClientViewSet, OperatorViewSet,
-    ConfirmedViewSet, LoadedViewSet, RetrievedViewSet, home, operator_view, client_view, register, reservation_detail, dashboard
+    ConfirmedViewSet, LoadedViewSet, RetrievedViewSet, home, operator_view, client_view, register, reservation_detail, dashboard, confirm_locker
 )
 from Lockers.views import LockerViewSet, StationViewSet
 from rest_framework.routers import DefaultRouter
@@ -40,6 +40,7 @@ urlpatterns = [
     path('home/', home, name='home'),
     path('operator/', operator_view, name='operator_view'),
     path('client/', client_view, name='client_view'),
+    path('confirm-locker/', confirm_locker, name='confirm_locker'),
     path('', include(router.urls)),
     path('register/', register, name='register'),
 

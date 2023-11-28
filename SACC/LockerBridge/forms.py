@@ -28,3 +28,6 @@ class UserRegisterForm(UserCreationForm):
     class Meta:
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'password1','password2']
+
+class ConfirmationForm(forms.Form):
+    reservation_code = forms.CharField(label='Reservation Code', max_length=200)
