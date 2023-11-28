@@ -24,6 +24,73 @@ def home(request):
 def generate_unique_code(lenght=8):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=lenght))
 
+def translate_json654(data):
+    for i in range(3):
+        casillero_id = data[i].get('id')
+        disponible = data[i].get('disponible')
+        abierto = data[i].get('abierto')
+
+        if casillero_id in [1,2,3]:
+            locker = Locker.objects.get(id=casillero_id)
+            if disponible == "D":
+                data[i]['availability'] = True
+                data[i]['reserved'] = False
+                data[i]['confirmed'] = False
+                data[i]['loaded'] = False
+                locker.availability = True
+                locker.reserved = False
+                locker.confirmed = False
+                locker.loaded = False
+                locker.save()
+            elif disponible == "R":
+                data[i]['availability'] = False
+                data[i]['reserved'] = True
+                data[i]['confirmed'] = False
+                data[i]['loaded'] = False
+                locker.availability = False
+                locker.reserved = True
+                locker.confirmed = False
+                locker.loaded = False
+                locker.save()
+            elif disponible == "C":
+                data[i]['availability'] = False
+                data[i]['reserved'] = False
+                data[i]['confirmed'] = True
+                data[i]['loaded'] = False
+                locker.availability = False
+                locker.reserved = False
+                locker.confirmed = True
+                locker.loaded = False
+                locker.save()
+            elif disponible == "A":
+                data[i]['availability'] = False
+                data[i]['reserved'] = False
+                data[i]['confirmed'] = False
+                data[i]['loaded'] = True
+                locker.availability = False
+                locker.reserved = False
+                locker.confirmed = False
+                locker.loaded = True
+                locker.save()
+
+            if abierto == True:
+                data[i]['locked'] = False
+            elif abierto == False:
+                data[i]['locked'] = True
+
+            data[i]['height'] = 26.0
+            data[i]['width'] = 43.0
+
+            data[i].pop('disponible', None)
+            data[i].pop('abierto', None)
+            data[i].pop('o_email', None)
+            data[i].pop('r_email', None)
+            data[i].pop('r_username', None)
+            data[i].pop('o_name', None)
+            data[i].pop('tamano', None)
+
+    return data
+
 
 class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.all()
@@ -38,6 +105,15 @@ class ReservationViewSet(viewsets.ModelViewSet):
         operator_id = request.data['operator']
         client = Client.objects.get(id=client_id)
         operator = Operator.objects.get(id=operator_id)
+
+         #get lockers amiwos G10
+        response = requests.get('http://161.35.0.111:8000/api/casilleros_disponibles/')
+        print(response.json())
+
+
+        if response.status_code == 200:
+            data = translate_json654(response.json())
+            print(data)
 
         suitable_locker = Locker.objects.filter(
                 height__gte=product_height,
@@ -63,10 +139,26 @@ class ReservationViewSet(viewsets.ModelViewSet):
             suitable_locker.reserved = True
             suitable_locker.save()
 
+            #STATION 1 amiwos G10 casilleros 1, 2 y 3
+            if suitable_locker.station.id == 1:
+                print('station 1, amiwos G10')
+                json_data = {
+                    'disponible': 'R',
+                    'abierto': False
+                }
+                headers = {'Content-Type': 'application/json',
+                        }
+
+                print(suitable_locker.id)
+                response = requests.post(f'http://161.35.0.111:8000/api/casilleros/actualizar/{suitable_locker.id}/', json=json_data, headers=headers)
+                print(response.status_code)
+
+            #STATION 3 amiwos G4 casilleros 7, 8 y 9
+
             #operator mail
 
             subject = 'Locker Reservation'
-            message = f'The reservation of the locker has been made successfully. Your code is {unique_code}. \n The locker is located in: {suitable_locker.station.address}. \n Its locker number is: {suitable_locker.id}. \n When loading the package in the locker please enter the correct infromation in the following link: https://tsqrmn8j-8000.brs.devtunnels.ms/operator/ \n \n SACC Team'
+            message = f'The reservation of the locker has been made successfully. The reservation code is {unique_code}. \n The locker is located in: {suitable_locker.station.address}. \n Its locker number is: {suitable_locker.id}. \n When at the station, please confirm that the package fits in the locker before leaving it at the following link: https://tsqrmn8j-8000.brs.devtunnels.ms/confirm-locker/ \n \n SACC Team'
             from_email = 'notification@miuandes.cl'
             recipient_list = [operator.mail]
             send_mail(subject, message, from_email, recipient_list)
@@ -74,12 +166,12 @@ class ReservationViewSet(viewsets.ModelViewSet):
 
             #client mail
 
-            subject = 'Locker Reservation'
-            message = f'The reservation of the locker has been made successfully. Your code is {unique_code}. \n The locker is located in: {suitable_locker.station.address}. \n Its locker number is: {suitable_locker.id}. \nWhen retrieving the package please enter the correct information in the following link: https://tsqrmn8j-8000.brs.devtunnels.ms/client/ \n \n SACC Team'
-            from_email = 'notification@miuandes.cl'
-            recipient_list = [client.mail]
-            send_mail(subject, message, from_email, recipient_list)
-            print(f'Email sent to client ({client.mail})')
+            # subject = 'Locker Reservation'
+            # message = f'The reservation of the locker has been made successfully. Your code is {unique_code}. \n The locker is located in: {suitable_locker.station.address}. \n Its locker number is: {suitable_locker.id}. \nWhen retrieving the package please enter the correct information in the following link: https://tsqrmn8j-8000.brs.devtunnels.ms/client/ \n \n SACC Team'
+            # from_email = 'notification@miuandes.cl'
+            # recipient_list = [client.mail]
+            # send_mail(subject, message, from_email, recipient_list)
+            # print(f'Email sent to client ({client.mail})')
 
             client_data = serializers.serialize('json', [client])
             operator_data = serializers.serialize('json', [operator])
@@ -152,8 +244,8 @@ class ConfirmedViewSet(viewsets.ModelViewSet):
     serializer_class = ConfirmedSerializer
 
     def create(self, request):
-        reservation_id = request.data['reservation_id']
-        reservation = Reservation.objects.get(id=reservation_id)
+        reservation_code = request.data['reservation_code']
+        reservation = Reservation.objects.filter(code=reservation_code).first()
         if reservation:
             Confirmed.objects.create(
                 reservation=reservation,
@@ -161,6 +253,42 @@ class ConfirmedViewSet(viewsets.ModelViewSet):
             locker = reservation.locker
             locker.confirmed = True
             locker.save()
+
+            #send mail to operator
+            subject = 'Locker Size Confirmed'
+            message = f'The locker size has been confirmed. The reservation code is {reservation.code}. \n When loading the package in the locker please enter the correct infromation in the following link: https://tsqrmn8j-8000.brs.devtunnels.ms/operator/ \n \n SACC Team'
+            from_email = 'notification@miuandes.cl'
+            recipient_list = [reservation.operator.mail]
+            send_mail(subject, message, from_email, recipient_list)
+            print(f'Email sent to operator ({reservation.operator.mail})')
+
+            #STATION 1 amiwos G10 casilleros 1, 2 y 3
+
+            if locker.station.id == 1:
+                print('station 1, amiwos G10')
+
+                #saber estado lockers
+                response = requests.get('http://161.35.0.111:8000/api/casilleros_disponibles/')
+                print(response.json())
+
+
+                if response.status_code == 200:
+                    data = translate_json654(response.json())
+                    print(data)
+                
+                
+                json_data = {
+                    'disponible': 'C',
+                    'abierto': False
+                }
+                headers = {'Content-Type': 'application/json',
+                        }
+
+                print(locker.id)
+                response = requests.post(f'http://161.35.0.111:8000/api/casilleros/actualizar/{locker.id}/', json=json_data, headers=headers)
+                print(response.status_code)
+                
+
             return JsonResponse({'message': 'Size confirmed'}, status=201)
         else:
             return JsonResponse({'message': 'Reservation not found'}, status=404)
@@ -193,7 +321,7 @@ class LoadedViewSet(viewsets.ModelViewSet):
                 reservation=reservation,
             )
             subject = 'Locker Loaded'
-            message = 'Your package is ready to be retrieved. Remember to enter the correct information in the following link: https://tsqrmn8j-8000.brs.devtunnels.ms/client/ \n\n SACC Team'
+            message = f'Your package is ready to be retrieved. \n Your code is: {reservation.code} \n The locker is located in the following station: {reservation.station} \n Its locker number is: {reservation.locker} \n.Please enter your code and email in the following link to open the locker: https://tsqrmn8j-8000.brs.devtunnels.ms/client/ \n\n SACC Team'
             from_email = 'notification@miuandes.cl'
             recipient_list = [reservation.client.mail]
 
@@ -203,6 +331,31 @@ class LoadedViewSet(viewsets.ModelViewSet):
             locker.opened = False
             locker.locked = True
             locker.save()
+
+            #STATION 1 amiwos G10 casilleros 1, 2 y 3
+
+            #saber estado
+            response = requests.get('http://161.35.0.111:8000/api/casilleros_disponibles/')
+            print(response.json())
+
+
+            if response.status_code == 200:
+                data = translate_json654(response.json())
+                print(data)
+
+            if locker.station.id == 1:
+                print('station 1, amiwos G10')
+                json_data = {
+                    'disponible': 'A',
+                    'abierto': False
+                }
+                headers = {'Content-Type': 'application/json',
+                        }
+
+                print(locker.id)
+                response = requests.post(f'http://161.35.0.111:8000/api/casilleros/actualizar/{locker.id}/', json=json_data, headers=headers)
+                print(response.status_code)
+
             return JsonResponse({'message': 'Locker Loaded Correctly'}, status=200)
         else:
             return JsonResponse({'message': 'Reservation not found'}, status=404)
@@ -248,6 +401,33 @@ class RetrievedViewSet(viewsets.ModelViewSet):
             locker.save()
             reservation.active = False
             reservation.save()
+
+            #STATION 1 amiwos G10 casilleros 1, 2 y 3
+
+            if locker.station.id == 1:
+                print('station 1, amiwos G10')
+
+                #saber estado lockers
+                response = requests.get('http://161.35.0.111:8000/api/casilleros_disponibles/')
+                print(response.json())
+
+
+                if response.status_code == 200:
+                    data = translate_json654(response.json())
+                    print(data)
+                
+                
+                json_data = {
+                    'disponible': 'D',
+                    'abierto': False
+                }
+                headers = {'Content-Type': 'application/json',
+                        }
+
+                print(locker.id)
+                response = requests.post(f'http://161.35.0.111:8000/api/casilleros/actualizar/{locker.id}/', json=json_data, headers=headers)
+
+
             return JsonResponse({'message': 'Packaged retrieved by client'}, status=200)
         else:
             return JsonResponse({'message': 'Reservation not found'}, status=404)
@@ -284,7 +464,7 @@ class CancelReservationViewSet(viewsets.ModelViewSet):
 
                                        
                                     
-from .forms import ReservationForm, UserRegisterForm
+from .forms import ReservationForm, UserRegisterForm, ConfirmationForm
 
 def operator_view(request):
     if request.method == 'POST':
@@ -386,6 +566,30 @@ def dashboard(request):
         station.reservations = station_reservations
     context = {'stations': stations}
     return render(request, 'dashboard.html', context)
+
+def confirm_locker(request):
+    if request.method == 'POST':
+        form = ConfirmationForm(request.POST)
+        if form.is_valid():
+            # Process the form data (e.g., save to database)
+            reservation_code = form.cleaned_data['reservation_code']
+            
+            data = {
+                'reservation_code': reservation_code,
+            }
+
+            response = requests.post('https://tsqrmn8j-8000.brs.devtunnels.ms/api/confirmed/', data=data)
+
+            if response.status_code == 201:
+                messages.success(request, f'Success! Size confirmed. Response: {response.json()}')
+            else:
+                messages.error(request, f'Error! {response.json()}')
+            
+            return redirect('confirm_locker')
+    else:
+        form = ConfirmationForm()
+
+    return render(request, 'confirm_locker.html', {'form': form})
 
 def stations_and_lockers(request):
     stations_with_lockers = Station.objects.prefetch_related('locker_set')

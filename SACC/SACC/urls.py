@@ -20,7 +20,7 @@ from django.contrib.auth import views as auth_views
 
 from LockerBridge.views import (
     ReservationViewSet, ClientViewSet, OperatorViewSet,
-    ConfirmedViewSet, LoadedViewSet, RetrievedViewSet, home, operator_view, client_view, register, reservation_detail, dashboard, stations_and_lockers
+    ConfirmedViewSet, LoadedViewSet, RetrievedViewSet, home, operator_view, client_view, register, reservation_detail, dashboard, stations_and_lockers, confirm_locker
 )
 from django.views.generic import RedirectView
 from Lockers.views import LockerViewSet, StationViewSet
@@ -41,6 +41,7 @@ urlpatterns = [
     path('home/', RedirectView.as_view(url='/dashboard/', permanent=True), name='home'),
     path('operator/', operator_view, name='operator_view'),
     path('client/', client_view, name='client_view'),
+    path('confirm-locker/', confirm_locker, name='confirm_locker'),
     path('', include(router.urls)),
     path('register/', register, name='register'),
 
