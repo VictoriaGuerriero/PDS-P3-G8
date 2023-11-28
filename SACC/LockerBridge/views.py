@@ -386,3 +386,8 @@ def dashboard(request):
         station.reservations = station_reservations
     context = {'stations': stations}
     return render(request, 'dashboard.html', context)
+
+def stations_and_lockers(request):
+    stations_with_lockers = Station.objects.prefetch_related('locker_set')
+    
+    return render(request, 'stations_info.html', {'stations_with_lockers': stations_with_lockers})

@@ -1,0 +1,74 @@
+<div class="modal fade" id="reservationModal{{ reservation.id }}" tabindex="-1" aria-labelledby="reservationModalLabel{{ reservation.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reservationModalLabel{{ reservation.id }}">Reservation Details #{{ reservation.id }}</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <h6><i class="fas fa-user"></i> Client</h6>
+                            <p>{{ reservation.client.mail }}</p>
+                        </div>
+                        <div class="col">
+                            <h6><i class="fas fa-user"></i> Operator</h6>
+                            <p>{{ reservation.operator.mail }}</p>
+                        </div>
+                        <div class="col">
+                            <h6><i class="fas fa-calendar-alt"></i> Reservation Date</h6>
+                            <p>{{ reservation.reservation_date }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col">
+                            <h6><i class="fas fa-check-circle"></i> Confirmation</h6>
+                            {% if reservation.confirmed_info %}
+                                <p class="text-success">Confirmed on {{ reservation.confirmed_info.confirmation_date }} by {{ reservation.operator.mail }}</p>
+                            {% else %}
+                                <p class="text-warning">Pending</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col">
+                            <h6><i class="fas fa-times-circle"></i> Cancellation</h6>
+                            {% if reservation.cancel_info %}
+                                <p class="text-danger">Cancelled on {{ reservation.cancel_info.cancel_date }} by {{ reservation.client.mail }}</p>
+                            {% else %}
+                                <p class="text-secondary">Not Cancelled</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col">
+                            <h6><i class="fas fa-upload"></i> Loaded</h6>
+                            {% if reservation.loaded_info %}
+                                <p class="text-success">Loaded on {{ reservation.loaded_info.load_date }} by {{ reservation.operator.mail }}</p>
+                            {% else %}
+                                <p class="text-warning">Pending</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col">
+                            <h6><i class="fas fa-download"></i> Retrieved</h6>
+                            {% if reservation.retrieved_info %}
+                                <p class="text-success">Retrieved on {{ reservation.retrieved_info.retrieved_date }} by {{ reservation.client.mail }}</p>
+                            {% else %}
+                                <p class="text-warning">Pending</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>

@@ -1,0 +1,34 @@
+{% extends 'home.html' %}
+
+{% block title %}Informacion de Estaciones{% endblock %}
+
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Informacion de Estaciones</h1>
+    
+    <div class="row">
+        {% for estacion in stations_with_lockers %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ estacion.address }}, {{ estacion.city }}, {{ estacion.region }}</h5>
+                        <ul class="list-group list-group-flush">
+                            {% for locker in estacion.locker_set.all %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Locker {{ locker.id }} ({{ locker.width }} cm x {{ locker.height }} cm)
+                                    {% if locker.availability %}
+                                        <span class="badge bg-success">Disponible</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">No Disponible</span>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{%endblock%}
