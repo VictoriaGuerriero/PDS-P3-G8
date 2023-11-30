@@ -138,6 +138,12 @@ class LockerViewSet(viewsets.ModelViewSet):
     def update_availability(self, request,pk):
         locker = Locker.objects.get(id=pk)
         locker.availability = True
+        locker.reserved = False
+        locker.locked = True
+        locker.loaded = False
+        locker.opened = False
+        locker.confirmed = False
+        
         locker.save()
         return JsonResponse({'message': 'Locker available'}, status=200)
     

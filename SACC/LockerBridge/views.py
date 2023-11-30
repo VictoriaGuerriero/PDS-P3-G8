@@ -192,6 +192,31 @@ class ReservationViewSet(viewsets.ModelViewSet):
             locker.locked = False
             locker.opened = True
             locker.save()
+
+            #STATION 1 amiwos G10 casilleros 1, 2 y 3
+
+            #saber estado
+            response = requests.get('http://161.35.0.111:8000/api/casilleros_disponibles/')
+            print(response.json())
+
+
+            if response.status_code == 200:
+                data = translate_json654(response.json())
+                print(data)
+
+            if locker.station.id == 1:
+                print('station 1, amiwos G10')
+                json_data = {
+                    'disponible': 'C',
+                    'abierto': True
+                }
+                headers = {'Content-Type': 'application/json',
+                        }
+
+                print(locker.id)
+                response = requests.post(f'http://161.35.0.111:8000/api/casilleros/actualizar/{locker.id}/', json=json_data, headers=headers)
+                print(response.status_code)
+
             return JsonResponse({'message': 'Operator confirmed, locker opened'}, status=200)
         else:
             return JsonResponse({'message': 'Reservation not found'}, status=404)
@@ -207,6 +232,30 @@ class ReservationViewSet(viewsets.ModelViewSet):
             locker.locked = False
             locker.opened = True
             locker.save()
+
+            #STATION 1 amiwos G10 casilleros 1, 2 y 3
+
+            #saber estado
+            response = requests.get('http://161.35.0.111:8000/api/casilleros_disponibles/')
+            print(response.json())
+
+
+            if response.status_code == 200:
+                data = translate_json654(response.json())
+                print(data)
+
+            if locker.station.id == 1:
+                print('station 1, amiwos G10')
+                json_data = {
+                    'disponible': 'C',
+                    'abierto': True
+                }
+                headers = {'Content-Type': 'application/json',
+                        }
+
+                print(locker.id)
+                response = requests.post(f'http://161.35.0.111:8000/api/casilleros/actualizar/{locker.id}/', json=json_data, headers=headers)
+                print(response.status_code)
 
             return JsonResponse({'message': 'Client confirmed, locker opened and package retrieved'}, status=200)
         else:
@@ -347,7 +396,7 @@ class LoadedViewSet(viewsets.ModelViewSet):
                 print('station 1, amiwos G10')
                 json_data = {
                     'disponible': 'A',
-                    'abierto': False
+                    'abierto': True
                 }
                 headers = {'Content-Type': 'application/json',
                         }
@@ -419,13 +468,14 @@ class RetrievedViewSet(viewsets.ModelViewSet):
                 
                 json_data = {
                     'disponible': 'D',
-                    'abierto': False
+                    'abierto': True
                 }
                 headers = {'Content-Type': 'application/json',
                         }
 
                 print(locker.id)
                 response = requests.post(f'http://161.35.0.111:8000/api/casilleros/actualizar/{locker.id}/', json=json_data, headers=headers)
+                print(response.status_code)
 
 
             return JsonResponse({'message': 'Packaged retrieved by client'}, status=200)
