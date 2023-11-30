@@ -101,10 +101,10 @@ class ReservationViewSet(viewsets.ModelViewSet):
         #Get product height and width from request
         product_height = request.data['product_height']
         product_width = request.data['product_width']
-        client_id = request.data['client']
-        operator_id = request.data['operator']
-        client = Client.objects.get(id=client_id)
-        operator = Operator.objects.get(id=operator_id)
+        client_mail = request.data['client_mail']
+        operator_mail = request.data['operator_mail']
+        client = Client.objects.get(mail=client_mail)
+        operator = Operator.objects.get(mail=operator_mail)
 
          #get lockers amiwos G10
         response = requests.get('http://161.35.0.111:8000/api/casilleros_disponibles/')
@@ -629,7 +629,7 @@ def confirm_locker(request):
                     'reservation_code': reservation_code,
                 }
 
-                response = requests.post('https://tsqrmn8j-8000.brs.devtunnels.ms/api/confirmed/', data=data)
+                response = requests.post('https://tsqrmn8j-8000.brs.devtunnels.ms/confirmeds/', data=data)
 
                 # Print the Content-Type if available
                 print(response.headers.get('Content-Type'))
