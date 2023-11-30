@@ -570,22 +570,38 @@ def dashboard(request):
 def confirm_locker(request):
     if request.method == 'POST':
         form = ConfirmationForm(request.POST)
-        if form.is_valid():
-            # Process the form data (e.g., save to database)
-            reservation_code = form.cleaned_data['reservation_code']
-            
-            data = {
-                'reservation_code': reservation_code,
-            }
+        try:
+            if form.is_valid():
+                # Process the form data (e.g., save to database)
+                reservation_code = form.cleaned_data['reservation_code']
+                
+                data = {
+                    'reservation_code': reservation_code,
+                }
 
-            response = requests.post('https://tsqrmn8j-8000.brs.devtunnels.ms/api/confirmed/', data=data)
+                response = requests.post('https://tsqrmn8j-8000.brs.devtunnels.ms/api/confirmed/', data=data)
+
+                # Print the Content-Type if available
+                print(response.headers.get('Content-Type'))
 
             if response.status_code == 201:
-                messages.success(request, f'Success! Size confirmed. Response: {response.json()}')
+                if response.text:  # Check if the response body is not empty
+                    messages.success(request, f'Success! Size confirmed. Response: {response.json()}')
+                else:
+                    messages.success(request, 'Success! Size confirmed. (No response body)')
             else:
                 messages.error(request, f'Error! {response.json()}')
-            
-            return redirect('confirm_locker')
+
+                
+                return redirect('confirm_locker')
+        except Exception as e:
+            # Handle the exception (e.g., print an error message)
+            print(f"An error occurred: {str(e)}")
+            messages.error(request, 'An error occurred while processing the request.')
+            print(response.status_code)
+            print(response.content)
+
+
     else:
         form = ConfirmationForm()
 
